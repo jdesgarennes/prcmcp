@@ -1,0 +1,83 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: prcmcp
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: prcmcp-workspace
+  namespace: prcmcp
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prcmcp
+  namespace: prcmcp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prcmcp
+  template:
+    metadata:
+      labels:
+        app: prcmcp
+    spec:
+      containers:
+        - name: prcmcp
+          image: python:3.12-slim-bookworm
+          ports:
+            - containerPort: 3000
+          command: ["/bin/bash", "-c"]
+          args:
+            - |
+              apt-get update &&
+              apt-get install -y --no-install-recommends git curl ca-certificates &&
+              rm -rf /var/lib/apt/lists/* &&
+
+              mkdir -p /workspace &&
+              cd /workspace &&
+
+              if [ ! -d prcmcp/.git ]; then
+                git clone https://github.com/jdesgarennes/prcmcp.git prcmcp
+              else
+                cd prcmcp && git pull && cd ..
+              fi &&
+
+              cd /workspace/prcmcp &&
+              pip install --no-cache-dir -r requirements.txt &&
+
+              fastmcp run app/server.py \
+                --transport http \
+                --host 0.0.0.0 \
+                --port 3000 \
+                --path /mcp/
+          volumeMounts:
+            - name: workspace
+              mountPath: /workspace
+      volumes:
+        - name: workspace
+          persistentVolumeClaim:
+            claimName: prcmcp-workspace
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prcmcp
+  namespace: prcmcp
+spec:
+  type: ClusterIP
+  selector:
+    app: prcmcp
+  ports:
+    - name: http
+      port: 3000
+      targetPort: 3000
