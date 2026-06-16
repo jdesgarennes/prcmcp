@@ -5,10 +5,18 @@ from typing import Any
 
 from fastmcp import FastMCP
 
-from app.panorama.api_search import PanoramaApiIndex
-from app.panorama.client import PanoramaConfigError, PanoramaReadOnlyClient
-from app.panorama.guardrails import GuardrailError
-from app.panorama.openapi_loader import OpenApiSpecError, load_openapi_spec
+try:
+    from app.panorama.api_search import PanoramaApiIndex
+    from app.panorama.client import PanoramaConfigError, PanoramaReadOnlyClient
+    from app.panorama.guardrails import GuardrailError
+    from app.panorama.openapi_loader import OpenApiSpecError, load_openapi_spec
+except ModuleNotFoundError:
+    # `fastmcp run app/server.py` loads this file directly and puts app/ on
+    # sys.path, not the repository root. Support that runtime shape too.
+    from panorama.api_search import PanoramaApiIndex
+    from panorama.client import PanoramaConfigError, PanoramaReadOnlyClient
+    from panorama.guardrails import GuardrailError
+    from panorama.openapi_loader import OpenApiSpecError, load_openapi_spec
 
 mcp = FastMCP("PRC MCP")
 
