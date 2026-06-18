@@ -30,11 +30,6 @@ def _get_index() -> PanoramaApiIndex:
     return _INDEX
 
 
-@mcp.tool()
-def ping() -> str:
-    """Basic health test tool."""
-    return "pong from prcmcp"
-
 
 @mcp.tool()
 def panorama_config_status() -> dict[str, Any]:
