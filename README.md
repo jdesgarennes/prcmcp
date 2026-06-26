@@ -4,12 +4,34 @@ FastMCP server for lab automation. It currently includes a Panorama OpenAPI help
 
 ## MCP tools
 
-- `ping()` — health check.
 - `panorama_config_status()` — confirms whether the server sees Panorama environment variables, without exposing secret values.
 - `list_panorama_api_categories()` — lists OpenAPI tags/categories and read-only GET endpoint counts.
 - `search_panorama_api(query, method=None, limit=10)` — searches `resources/palo-openapi.json` for matching endpoints.
 - `get_panorama_endpoint(path, method="GET")` — returns detailed OpenAPI docs for one endpoint, including parameters.
 - `call_panorama_read_api(path, params=None, timeout=30)` — executes a validated read-only GET call against Panorama.
+
+## Audit logging
+
+MCP tool calls are audited to LogRhythm over UDP syslog by default.
+
+Default audit settings:
+
+- syslog host: `syslog.pechanga.com`
+- syslog port: `514/udp`
+- format: JSON payload inside syslog
+- full tool arguments and results are logged
+- obvious secrets such as API keys, tokens, passwords, cookies, and authorization headers are redacted
+- oversized events are truncated and marked with `result_truncated: true`
+
+Optional environment variable overrides:
+
+- `AUDIT_ENABLED` — defaults to `true`
+- `AUDIT_ENV` — defaults to `unknown`
+- `AUDIT_SERVER_NAME` — defaults to `prcmcp`
+- `LOGRHYTHM_SYSLOG_HOST` — defaults to `syslog.pechanga.com`
+- `LOGRHYTHM_SYSLOG_PORT` — defaults to `514`
+- `AUDIT_LOG_FULL_RESULTS` — defaults to `true`
+- `AUDIT_MAX_EVENT_BYTES` — defaults to `32768`
 
 ## Safety model
 

@@ -6,6 +6,7 @@ from typing import Any
 from fastmcp import FastMCP
 
 try:
+    from app.audit import audit_tool
     from app.panorama.api_search import PanoramaApiIndex
     from app.panorama.client import PanoramaConfigError, PanoramaReadOnlyClient
     from app.panorama.guardrails import GuardrailError
@@ -13,6 +14,7 @@ try:
 except ModuleNotFoundError:
     # `fastmcp run app/server.py` loads this file directly and puts app/ on
     # sys.path, not the repository root. Support that runtime shape too.
+    from audit import audit_tool
     from panorama.api_search import PanoramaApiIndex
     from panorama.client import PanoramaConfigError, PanoramaReadOnlyClient
     from panorama.guardrails import GuardrailError
@@ -32,6 +34,7 @@ def _get_index() -> PanoramaApiIndex:
 
 
 @mcp.tool()
+@audit_tool
 def panorama_config_status() -> dict[str, Any]:
     """Show whether Panorama runtime config is present without exposing secrets."""
     try:
@@ -42,12 +45,14 @@ def panorama_config_status() -> dict[str, Any]:
 
 
 @mcp.tool()
+@audit_tool
 def list_panorama_api_categories() -> list[dict[str, Any]]:
     """List OpenAPI tags/categories and how many read-only GET endpoints each has."""
     return _get_index().categories()
 
 
 @mcp.tool()
+@audit_tool
 def search_panorama_api(query: str, method: str | None = None, limit: int = 10) -> list[dict[str, Any]]:
     """Search the bundled Panorama OpenAPI spec for matching endpoints.
 
@@ -58,6 +63,7 @@ def search_panorama_api(query: str, method: str | None = None, limit: int = 10) 
 
 
 @mcp.tool()
+@audit_tool
 def get_panorama_endpoint(path: str, method: str = "GET") -> dict[str, Any]:
     """Return detailed OpenAPI documentation for one Panorama endpoint."""
     try:
@@ -67,6 +73,7 @@ def get_panorama_endpoint(path: str, method: str = "GET") -> dict[str, Any]:
 
 
 @mcp.tool()
+@audit_tool
 def call_panorama_read_api(path: str, params: dict[str, Any] | None = None, timeout: int = 30) -> dict[str, Any]:
     """Call a validated read-only GET endpoint on Panorama.
 
