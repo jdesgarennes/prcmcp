@@ -40,6 +40,15 @@ def _logical_success(result: Any) -> bool:
 
 def _emit_event(event: dict[str, Any], config: AuditConfig) -> None:
     delivered = send_syslog_json(event, config)
+    print(
+        "AUDIT_SYSLOG_ATTEMPT "
+        f"tool={event.get('tool', 'unknown')} "
+        f"success={event.get('success', False)} "
+        f"delivered={delivered} "
+        f"truncated={event.get('result_truncated', False)} "
+        f"destination={config.syslog_host}:{config.syslog_port}",
+        flush=True,
+    )
     if not delivered:
         LOGGER.warning("failed to send audit event to syslog", extra={"tool": event.get("tool")})
 
