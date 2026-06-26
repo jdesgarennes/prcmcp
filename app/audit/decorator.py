@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import functools
 import inspect
 import logging
 import time
@@ -56,7 +55,6 @@ def _emit_event(event: dict[str, Any], config: AuditConfig) -> None:
 def audit_tool(func: F) -> F:
     """Audit an MCP tool call to LogRhythm syslog without blocking the tool."""
 
-    @functools.wraps(func)
     def wrapper(*args: Any, **kwargs: Any) -> Any:
         config = AuditConfig.from_env()
         if not config.enabled:
@@ -101,4 +99,13 @@ def audit_tool(func: F) -> F:
         _emit_event(redact(event), config)
         return result
 
+    # Preserve FastMCP's tool metadata/signature without setting __wrapped__.
+    # FastMCP inspects callables deeply; exposing __wrapped__ can cause it to
+    # register/call the original function and bypass the audit wrapper.
+    wrapper.__name__ = func.__name__
+    wrapper.__qualname__ = func.__qualname__
+    wrapper.__doc__ = func.__doc__
+    wrapper.__module__ = func.__module__
+    wrapper.__annotations__ = getattr(func, "__annotations__", {}).copy()
+    wrapper.__signature__ = inspect.signature(func)  # type: ignore[attr-defined]
     return cast(F, wrapper)
